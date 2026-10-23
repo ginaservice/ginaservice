@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "dom"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "paths": {
+      "@gina/ui": ["./packages/ui/src/index.ts"],
+      "@gina/types": ["./packages/types/src/index.ts"],
+      "@gina/config": ["./packages/config/src/index.ts"],
+      "@gina/utils": ["./packages/utils/src/index.ts"],
+      "@gina/sdk": ["./packages/sdk/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".next", "**/*.spec.ts"]
+}

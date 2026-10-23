@@ -1,0 +1,207 @@
+name: GinaService CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'hotfix/**']
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/ginaservice
+
+jobs:
+  # ===================================================
+  # 1. SECURITY SCAN — Must pass before anything else
+  # ===================================================
+  security:
+    name: 🔐 Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy (filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+      - name: Audit npm packages
+        run: npx audit-ci --critical
+      - name: Secret scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+
+  # ===================================================
+  # 2. CODE QUALITY
+  # ===================================================
+  quality:
+    name: 🔍 Quality Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}', cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm format -- --check
+
+  # ===================================================
+  # 3. UNIT TESTS (Parallel per service)
+  # ===================================================
+  test-unit:
+    name: 🧪 Unit Tests — ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api-gateway, auth-service, gina-pay, user-service, notification-service, chameleon-core]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}', cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter ./services/${{ matrix.service }} test -- --coverage
+      - uses: codecov/codecov-action@v4
+        with: { flags: ${{ matrix.service }} }
+
+  # ===================================================
+  # 4. INTEGRATION TESTS
+  # ===================================================
+  test-integration:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [quality]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: gina, POSTGRES_PASSWORD: gina_test, POSTGRES_DB: gina_test }
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}', cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:integration
+        env:
+          DATABASE_URL: postgresql://gina:gina_test@localhost:5432/gina_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test_jwt_secret_minimum_32_characters_long
+
+  # ===================================================
+  # 5. E2E TESTS
+  # ===================================================
+  test-e2e:
+    name: 🎭 E2E Tests
+    runs-on: ubuntu-latest
+    needs: [test-integration]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: '${{ env.PNPM_VERSION }}' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '${{ env.NODE_VERSION }}', cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm dlx playwright install --with-deps
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: e2e-report, path: playwright-report/ }
+
+  # ===================================================
+  # 6. BUILD & PUSH IMAGES (main / develop only)
+  # ===================================================
+  build-images:
+    name: 🐳 Build ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [security, test-unit, test-integration]
+    if: github.event_name == 'push'
+    permissions: { contents: read, packages: write }
+    strategy:
+      matrix:
+        service:
+          - { name: api-gateway,          context: ./services/api-gateway }
+          - { name: auth-service,         context: ./services/auth-service }
+          - { name: gina-pay,             context: ./services/gina-pay }
+          - { name: user-service,         context: ./services/user-service }
+          - { name: notification-service, context: ./services/notification-service }
+          - { name: chameleon-core,       context: ./services/chameleon-core }
+          - { name: web-app,              context: ./apps/web }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with: { registry: '${{ env.REGISTRY }}', username: '${{ github.actor }}', password: '${{ secrets.GITHUB_TOKEN }}' }
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,prefix=sha-,format=short
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service.name }}
+          cache-to: type=gha,scope=${{ matrix.service.name }},mode=max
+
+  # ===================================================
+  # 7. DEPLOY STAGING
+  # ===================================================
+  deploy-staging:
+    name: 🚀 Deploy → Staging
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+      - name: Deploy to EKS Staging
+        run: |
+          echo "Deploying to staging cluster..."
+          # kubectl apply -k infra/k8s/overlays/staging
+
+  # ===================================================
+  # 8. DEPLOY PRODUCTION
+  # ===================================================
+  deploy-production:
+    name: 🌍 Deploy → Production
+    runs-on: ubuntu-latest
+    needs: [build-images, test-e2e]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+      - name: Deploy to EKS Production (Blue/Green)
+        run: |
+          echo "Deploying to production cluster (blue/green)..."
+          # kubectl apply -k infra/k8s/overlays/prod
+      - name: Notify Slack
+        if: always()
+        run: |
+          echo "Notifying Slack of deployment status: ${{ job.status }}"
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK }} ...
