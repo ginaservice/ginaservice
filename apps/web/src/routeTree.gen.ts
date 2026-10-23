@@ -3,6 +3,7 @@ import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/re
 import { lazy, Suspense } from 'react'
 
 const HomePage = lazy(() => import('./pages/Home'))
+const MarketPage = lazy(() => import('./pages/Market'))
 const DashboardPage = lazy(() => import('./pages/Dashboard'))
 const LoginPage = lazy(() => import('./pages/auth/Login'))
 const RegisterPage = lazy(() => import('./pages/auth/Register'))
@@ -31,6 +32,7 @@ export const rootRoute = createRootRoute({ component: () => <Outlet /> })
 
 const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/', component: withSuspense(HomePage) }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/market', component: withSuspense(MarketPage) }),
   createRoute({ getParentRoute: () => rootRoute, path: '/dashboard', component: withSuspense(DashboardPage) }),
   createRoute({ getParentRoute: () => rootRoute, path: '/auth/login', component: withSuspense(LoginPage) }),
   createRoute({ getParentRoute: () => rootRoute, path: '/auth/register', component: withSuspense(RegisterPage) }),
