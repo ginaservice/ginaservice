@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ginaservice-staging
+resources:
+  - ../../base
+replicas:
+  - name: gina-api-gateway
+    count: 2
+  - name: gina-pay
+    count: 2
+  - name: gina-chameleon-core
+    count: 1

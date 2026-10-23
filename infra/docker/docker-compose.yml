@@ -87,6 +87,20 @@ services:
     networks: [gina-net]
     restart: unless-stopped
 
+  # ========== Analytics Service ==========
+  analytics-service:
+    build: { context: ./services/analytics-service, dockerfile: Dockerfile }
+    container_name: gina-analytics-service
+    ports: ["3005:3005"]
+    environment:
+      NODE_ENV: development
+      PORT: 3005
+      DATABASE_URL: postgresql://gina:${DB_PASSWORD:-gina_dev_pass}@postgres:5432/gina_db
+      REDIS_URL: redis://redis:6379
+    depends_on: [redis, postgres]
+    networks: [gina-net]
+    restart: unless-stopped
+
   # ========== Chameleon Core ==========
   chameleon-core:
     build: { context: ./services/chameleon-core, dockerfile: Dockerfile }

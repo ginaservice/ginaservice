@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gina-api-gateway
+spec:
+  selector: { app: gina-api-gateway }
+  ports: [{ port: 80, targetPort: 3000 }]
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gina-pay
+spec:
+  selector: { app: gina-pay }
+  ports: [{ port: 3003, targetPort: 3003 }]
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gina-chameleon-core
+spec:
+  selector: { app: gina-chameleon-core }
+  ports: [{ port: 3006, targetPort: 3006 }]
+  type: ClusterIP

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gina-api-gateway
+  labels: { app: gina-api-gateway, tier: gateway }
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: gina-api-gateway }
+  template:
+    metadata:
+      labels: { app: gina-api-gateway }
+    spec:
+      containers:
+        - name: api-gateway
+          image: ghcr.io/ginaservice/api-gateway:latest
+          ports: [{ containerPort: 3000 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 3000 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gina-pay
+  labels: { app: gina-pay, tier: payments }
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: gina-pay }
+  template:
+    metadata:
+      labels: { app: gina-pay }
+    spec:
+      containers:
+        - name: gina-pay
+          image: ghcr.io/ginaservice/gina-pay:latest
+          ports: [{ containerPort: 3003 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 3003 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gina-chameleon-core
+  labels: { app: gina-chameleon-core, tier: ai }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: gina-chameleon-core }
+  template:
+    metadata:
+      labels: { app: gina-chameleon-core }
+    spec:
+      containers:
+        - name: chameleon-core
+          image: ghcr.io/ginaservice/chameleon-core:latest
+          ports: [{ containerPort: 3006 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 3006 }
+            initialDelaySeconds: 10
+            periodSeconds: 15

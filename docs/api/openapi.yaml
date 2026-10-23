@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info:
+  title: GinaService Platform API
+  version: 1.0.0
+  description: Amazon-Grade Unified API Gateway for Auth, Users, KYC, GinaPay, Notifications, Analytics, and Chameleon Core.
+servers:
+  - url: https://api.ginaservice.com
+    description: Production Gateway
+  - url: http://localhost:3000
+    description: Local Development Gateway
+paths:
+  /health:
+    get:
+      summary: Aggregated Microservices Health Check
+      responses:
+        '200':
+          description: Platform health status
+  /api/v1/auth/login:
+    post:
+      summary: Authenticate User (JWT + MFA)
+      responses:
+        '200':
+          description: Access and Refresh tokens
+  /api/v1/pay/transactions:
+    post:
+      summary: Execute GinaPay Payment (GinaWallet 0.5% Best Rate)
+      responses:
+        '201':
+          description: Transaction processed
+  /api/v1/chameleon/execute:
+    post:
+      summary: Execute Adaptive Skill on Chameleon Core
+      responses:
+        '200':
+          description: Skill execution result

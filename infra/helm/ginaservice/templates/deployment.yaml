@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api-gateway
+spec:
+  replicas: {{ .Values.apiGateway.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api-gateway
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: "{{ .Values.global.imageRegistry }}/api-gateway:{{ .Chart.AppVersion }}"
+          ports:
+            - containerPort: {{ .Values.apiGateway.port }}
