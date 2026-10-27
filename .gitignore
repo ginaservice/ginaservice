@@ -1,5 +1,7 @@
 node_modules/
 dist/
+!packages/gina-yoinks-media/dist/
+!packages/gina-yoinks-media/dist/**
 build/
 .next/
 out/

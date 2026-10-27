@@ -1,0 +1,86 @@
+{
+  "name": "gina-yoinks-media",
+  "version": "0.3.1",
+  "description": "GINASERVICE Sovereign Media Tool (yoinks integration — GINA-SEC-7L-2026 | SEC-L1/TS-L1): yoink any video from YouTube, X, Instagram, Threads & 1800+ sites with SSRF/Injection quarantine and WORM audit logging.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "yoinks": "dist/cli.js",
+    "gina-yoinks": "dist/cli.js",
+    "gina-yoinks-mcp": "dist/mcp_server.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./security": {
+      "types": "./dist/security/gina_yoinks_guard.d.ts",
+      "import": "./dist/security/gina_yoinks_guard.js",
+      "default": "./dist/security/gina_yoinks_guard.js"
+    },
+    "./mcp": "./dist/mcp_server.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "tsx --test src/**/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "start": "node dist/cli.js",
+    "mcp": "node dist/mcp_server.js",
+    "prepublishOnly": "npm test && npm run typecheck && npm run build"
+  },
+  "author": "Pablo Stanley (Upstream MIT) & Mohamed Boudalla / GINASERVICE SARL AU (Sovereign Integration)",
+  "keywords": [
+    "ginaservice",
+    "referpay",
+    "yoinks",
+    "video",
+    "downloader",
+    "yt-dlp",
+    "youtube",
+    "instagram",
+    "twitter",
+    "threads",
+    "tiktok",
+    "cli",
+    "tui",
+    "ink",
+    "mcp"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "ffmpeg-static": "^5.3.0",
+    "ink": "^7.1.0",
+    "ink-select-input": "^6.2.0",
+    "ink-spinner": "^5.0.0",
+    "react": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ginaservice/ginaservice.git",
+    "directory": "packages/gina-yoinks-media"
+  },
+  "homepage": "https://github.com/ginaservice/ginaservice/tree/main/packages/gina-yoinks-media#readme",
+  "bugs": {
+    "url": "https://github.com/ginaservice/ginaservice/issues"
+  }
+}

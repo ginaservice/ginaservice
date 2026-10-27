@@ -1,0 +1,95 @@
+name: GINA-SEC-7L-2026 Yoinks Media CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'agent/DEV-MEDIA/**'
+    paths:
+      - 'packages/gina-yoinks-media/**'
+      - 'apps/web-portal/**'
+      - 'pnpm-workspace.yaml'
+      - 'Dockerfile.yoinks-sandbox'
+      - '.github/workflows/gina-yoinks-ci.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: write
+  actions: write
+  packages: write
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  GINA_SECURITY_PROTOCOL: 'GINA-SEC-7L-2026'
+  GINA_DOCUMENT_REF: 'GINA-ANTIGRAVITY-YOINKS-GITHUB-2026-V1'
+
+jobs:
+  gina-yoinks-security-and-build:
+    name: 🛡️ GINA-SEC-7L-2026 Audit, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm (reads packageManager pnpm@9.0.0 from package.json)
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Layer 2 & 6 (SEC-02 / SEC-06) — Verify MIT License & Zero Secret Leakage (S_leak = 0.00)
+        run: |
+          echo "Verifying MIT License preservation (R_legal = 1.0)..."
+          test -f packages/gina-yoinks-media/LICENSE
+          grep -q "MIT License" packages/gina-yoinks-media/LICENSE
+          grep -q "Pablo Stanley" packages/gina-yoinks-media/LICENSE
+
+          echo "Scanning packages/gina-yoinks-media & apps/web-portal for leaked secrets (S_leak = 0.00, R_secret = 1.0)..."
+          ! grep -rnE "(BEGIN (RSA|EC|OPENSSH) PRIVATE KEY|sk-[a-zA-Z0-9]{32,})" packages/gina-yoinks-media/src/ apps/web-portal/ || exit 1
+          echo "✅ Layer 6 TSIU Gate Passed: S_leak=0.00, R_secret=1.0, R_legal=1.0"
+
+      - name: Layer 4 (SEC-04 ARTI) — Validate Dockerfile.yoinks-sandbox Isolation
+        run: |
+          test -f packages/gina-yoinks-media/Dockerfile.yoinks-sandbox
+          test -f Dockerfile.yoinks-sandbox
+          grep -q "gina-media-user" packages/gina-yoinks-media/Dockerfile.yoinks-sandbox
+          grep -q "/tmp/yoinks-downloads" packages/gina-yoinks-media/Dockerfile.yoinks-sandbox
+          echo "✅ Layer 4 Sandbox Manifest Verified"
+
+      - name: Install Workspace Dependencies (pnpm)
+        run: pnpm install --ignore-scripts --no-frozen-lockfile
+
+      - name: Build gina-yoinks-media Package (tsup)
+        run: pnpm --filter gina-yoinks-media build
+
+      - name: Run gina-yoinks-media Typecheck & Unit/Security Tests
+        run: |
+          pnpm --filter gina-yoinks-media typecheck
+          pnpm --filter gina-yoinks-media test
+
+      - name: Verify CLI & MCP Server Artifacts (Layer 7 WORM Readiness)
+        working-directory: packages/gina-yoinks-media
+        run: |
+          test -f dist/cli.js
+          test -f dist/mcp_server.js
+          test -f dist/index.js
+          node dist/cli.js --help
+          node dist/cli.js --version
+
+      - name: Build & Typecheck Next.js 15 Web Portal (apps/web-portal)
+        run: |
+          pnpm --filter web-portal typecheck
+          pnpm --filter web-portal build
+          echo "✅ All GINA-ANTIGRAVITY-YOINKS-GITHUB-2026-V1 & web-portal artifacts verified"
