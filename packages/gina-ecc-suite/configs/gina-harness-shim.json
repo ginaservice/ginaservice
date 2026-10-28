@@ -1,0 +1,50 @@
+{
+  "schema_version": "2026.1.0",
+  "architecture": "GINA Sovereign Multi-Agent Architecture",
+  "security_charter": {
+    "protocol": "GINA-SEC-7L-2026",
+    "zero_trust": true,
+    "sandbox_flags": [
+      "--cap-drop=ALL",
+      "--security-opt=no-new-privileges:true",
+      "--read-only"
+    ],
+    "dlp_policy": {
+      "s_leak": 0.0,
+      "r_secret": 1.0,
+      "telemetry_egress": "blocked",
+      "audit_sink": "audit-stream@ginaservice.com"
+    }
+  },
+  "memory_topology": {
+    "L1_hot_state": {
+      "engine": "Redis 7",
+      "namespace": "gina:chameleon:state:{userId}:{skillId}",
+      "ttl_seconds": 86400
+    },
+    "L2_warm_context": {
+      "engine": "PostgreSQL 16 + pgvector",
+      "table": "skill_executions",
+      "ast_lock_prefix": "lock:repo:skills"
+    },
+    "L3_cold_ledger": {
+      "engine": "WORM Immutable SHA-256 Merkle Log",
+      "verification": "HMAC-SHA256"
+    }
+  },
+  "tool_execution_hooks": {
+    "Read": "gina.fs.read_file",
+    "Write": "gina.fs.write_file",
+    "Edit": "gina.fs.edit_file",
+    "Grep": "gina.search.ripgrep",
+    "Glob": "gina.search.glob",
+    "Bash": "gina.sandbox.exec_command"
+  },
+  "inventory_counts": {
+    "skills": 311,
+    "agents": 71,
+    "commands": 97,
+    "rules": 122,
+    "helper_scripts": 121
+  }
+}
