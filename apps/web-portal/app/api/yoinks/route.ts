@@ -10,7 +10,7 @@ import {
   SOVEREIGN_SUPERVISORS,
   runHeadlessDownload,
   type YoinksAuditRecord,
-} from '@gina/yoinks-media'
+} from 'gina-yoinks-media'
 
 export const runtime = 'nodejs'
 

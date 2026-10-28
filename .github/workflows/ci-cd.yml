@@ -2,9 +2,16 @@ name: GinaService CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop, 'feature/**', 'hotfix/**']
+    branches: [main, develop, 'feature/**', 'hotfix/**', 'agent/DEV-MEDIA/**']
   pull_request:
     branches: [main, develop]
+
+permissions:
+  contents: write
+  actions: write
+  packages: write
+  pull-requests: write
+  checks: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,7 +19,6 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  PNPM_VERSION: '9'
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/ginaservice
 
@@ -38,16 +44,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
+      - name: Setup pnpm (reads packageManager pnpm@9.0.0 from package.json)
+        uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Verify Monorepo Workspaces
         run: |
-          node -e "const pkg = require('./package.json'); console.log('Verified root package:', pkg.name, pkg.version);"
+          node -e "const pkg = require('./package.json'); console.log('Verified root package:', pkg.name, pkg.version, pkg.packageManager);"
+          test -f pnpm-workspace.yaml
           test -f apps/web/package.json
+          test -f apps/web-portal/package.json
+          test -f apps/web-portal/app/api/yoinks/route.ts
+          test -f apps/web-portal/app/dashboard/page.tsx
+          test -f apps/web-portal/components/YoinksConsole.tsx
+          test -f apps/web-portal/vercel.json
           test -f services/api-gateway/src/index.ts
           test -f services/auth-service/src/index.ts
           test -f services/gina-pay/src/index.ts

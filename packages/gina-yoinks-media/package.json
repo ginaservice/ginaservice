@@ -1,5 +1,5 @@
 {
-  "name": "@gina/yoinks-media",
+  "name": "gina-yoinks-media",
   "version": "0.3.1",
   "description": "GINASERVICE Sovereign Media Tool (yoinks integration — GINA-SEC-7L-2026 | SEC-L1/TS-L1): yoink any video from YouTube, X, Instagram, Threads & 1800+ sites with SSRF/Injection quarantine and WORM audit logging.",
   "type": "module",

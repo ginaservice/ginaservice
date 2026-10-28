@@ -3,7 +3,7 @@
   "version": 2,
   "framework": "nextjs",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm --filter @gina/yoinks-media build && pnpm --filter web-portal build",
+  "buildCommand": "pnpm --filter gina-yoinks-media build && pnpm --filter web-portal build",
   "outputDirectory": ".next",
   "env": {
     "GINA_SECURITY_PROTOCOL": "GINA-SEC-7L-2026",
