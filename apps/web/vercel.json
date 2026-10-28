@@ -1,0 +1,33 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "framework": "nextjs",
+  "installCommand": "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm install --no-frozen-lockfile",
+  "buildCommand": "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm --filter gina-yoinks-media build && next build",
+  "outputDirectory": ".next",
+  "build": {
+    "env": {
+      "ENABLE_EXPERIMENTAL_COREPACK": "1"
+    }
+  },
+  "env": {
+    "ENABLE_EXPERIMENTAL_COREPACK": "1",
+    "GINA_SECURITY_PROTOCOL": "GINA-SEC-7L-2026",
+    "GINA_DOCUMENT_REF": "GINA-ANTIGRAVITY-YOINKS-GITHUB-2026-V1",
+    "GINA_CLEARANCE": "SEC-L1/TS-L1",
+    "GINA_AGENT_ID": "GINA-DIR5-MEDIA-001"
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "X-Gina-Security-Protocol", "value": "GINA-SEC-7L-2026" },
+        { "key": "X-Gina-Clearance", "value": "SEC-L1/TS-L1" },
+        { "key": "X-Gina-S-Leak", "value": "0.00" },
+        { "key": "X-Gina-R-Secret", "value": "1.0" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
+    }
+  ]
+}

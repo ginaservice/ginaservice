@@ -1,6 +1,10 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalPassThroughEnv": [
+    "COREPACK_HOME",
+    "ENABLE_EXPERIMENTAL_COREPACK"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

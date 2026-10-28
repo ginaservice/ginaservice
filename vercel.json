@@ -3,8 +3,8 @@
   "version": 2,
   "framework": "nextjs",
   "installCommand": "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm install --no-frozen-lockfile",
-  "buildCommand": "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm --filter gina-yoinks-media build && pnpm --filter web-portal build",
-  "outputDirectory": "apps/web-portal/.next",
+  "buildCommand": "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm --filter gina-yoinks-media build && next build",
+  "outputDirectory": ".next",
   "build": {
     "env": {
       "ENABLE_EXPERIMENTAL_COREPACK": "1"
