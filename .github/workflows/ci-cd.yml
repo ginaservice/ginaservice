@@ -60,6 +60,9 @@ jobs:
           test -f packages/sdk/src/index.ts
           test -f packages/utils/src/index.ts
           test -f packages/config/src/index.ts
+          test -f packages/gina-yoinks-media/src/index.ts
+          test -f packages/gina-yoinks-media/src/security/gina_yoinks_guard.ts
+          test -f packages/gina-yoinks-media/src/mcp_server.ts
 
   # ===================================================
   # 3. UNIT TESTS (Parallel per service)

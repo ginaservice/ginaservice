@@ -1,0 +1,83 @@
+name: GINA-SEC-7L-2026 Yoinks Media CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'agent/DEV-MEDIA/**'
+    paths:
+      - 'packages/gina-yoinks-media/**'
+      - 'Dockerfile.yoinks-sandbox'
+      - '.github/workflows/gina-yoinks-ci.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  GINA_SECURITY_PROTOCOL: 'GINA-SEC-7L-2026'
+  GINA_DOCUMENT_REF: 'GINA-ANTIGRAVITY-YOINKS-GITHUB-2026-V1'
+
+jobs:
+  gina-yoinks-security-and-build:
+    name: 🛡️ GINA-SEC-7L-2026 Audit, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Layer 2 & 6 (SEC-02 / SEC-06) — Verify MIT License & Zero Secret Leakage (S_leak = 0.00)
+        run: |
+          echo "Verifying MIT License preservation (R_legal = 1.0)..."
+          test -f packages/gina-yoinks-media/LICENSE
+          grep -q "MIT License" packages/gina-yoinks-media/LICENSE
+          grep -q "Pablo Stanley" packages/gina-yoinks-media/LICENSE
+
+          echo "Scanning packages/gina-yoinks-media for leaked secrets (S_leak = 0.00, R_secret = 1.0)..."
+          ! grep -rnE "(BEGIN (RSA|EC|OPENSSH) PRIVATE KEY|sk-[a-zA-Z0-9]{32,})" packages/gina-yoinks-media/src/ || exit 1
+          echo "✅ Layer 6 TSIU Gate Passed: S_leak=0.00, R_secret=1.0, R_legal=1.0"
+
+      - name: Layer 4 (SEC-04 ARTI) — Validate Dockerfile.yoinks-sandbox Isolation
+        run: |
+          test -f packages/gina-yoinks-media/Dockerfile.yoinks-sandbox
+          test -f Dockerfile.yoinks-sandbox
+          grep -q "gina-media-user" packages/gina-yoinks-media/Dockerfile.yoinks-sandbox
+          grep -q "/tmp/yoinks-downloads" packages/gina-yoinks-media/Dockerfile.yoinks-sandbox
+          echo "✅ Layer 4 Sandbox Manifest Verified"
+
+      - name: Install Package Dependencies
+        working-directory: packages/gina-yoinks-media
+        run: npm install --no-workspaces
+
+      - name: Run TypeScript Typecheck (npm run typecheck)
+        working-directory: packages/gina-yoinks-media
+        run: npm run typecheck
+
+      - name: Run Unit & Security Quarantine Tests (npm test)
+        working-directory: packages/gina-yoinks-media
+        run: npm test
+
+      - name: Build Bundle via tsup (npm run build)
+        working-directory: packages/gina-yoinks-media
+        run: npm run build
+
+      - name: Verify CLI & MCP Server Artifacts (Layer 7 WORM Readiness)
+        working-directory: packages/gina-yoinks-media
+        run: |
+          test -f dist/cli.js
+          test -f dist/mcp_server.js
+          test -f dist/index.js
+          node dist/cli.js --help
+          node dist/cli.js --version
+          echo "✅ All GINA-ANTIGRAVITY-YOINKS-GITHUB-2026-V1 artifacts verified"

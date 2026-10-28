@@ -51,7 +51,8 @@ ginaservice/
 │   ├── types/                  # Shared TypeScript types
 │   ├── config/                 # ESLint, Prettier, TS configs
 │   ├── utils/                  # Shared utilities
-│   └── sdk/                    # GinaService JS/TS SDK
+│   ├── sdk/                    # GinaService JS/TS SDK
+│   └── gina-yoinks-media/      # 🎬 Sovereign Media CLI & MCP Tool (GINA-SEC-7L-2026)
 │
 ├── ⚙️ services/
 │   ├── api-gateway/            # Central gateway (Port 3000)

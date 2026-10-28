@@ -1,0 +1,59 @@
+# =============================================================================
+# GINASERVICE & REFERPAY DAO — Layer 4 Sandboxed Media Container
+# Document Ref: GINA-ANTIGRAVITY-YOINKS-GITHUB-2026-V1
+# Security Protocol: GINA-SEC-7L-2026 (SEC-04: argon.sec-04.arti@security.ginaservice.com)
+# Classification: SEC-L1 / TS-L1 (Isolated from Patent No. 30828 Fintech Engine)
+# Recommended Run Flags:
+#   docker run --rm --cap-drop=ALL --security-opt=no-new-privileges:true \
+#     --read-only --tmpfs /tmp/yoinks-downloads:rw,noexec,nosuid,size=2g \
+#     gina-yoinks-sandbox:latest --best -o /tmp/yoinks-downloads --worm-log <URL>
+# =============================================================================
+
+FROM node:20-alpine AS builder
+
+WORKDIR /build
+COPY package.json tsconfig.json tsup.config.ts LICENSE README.md ./
+COPY src ./src
+
+RUN npm install --no-workspaces --ignore-scripts=false && \
+    npm run typecheck && \
+    npm run build && \
+    npm prune --omit=dev
+
+FROM node:20-alpine AS runtime
+
+LABEL org.opencontainers.image.title="gina-yoinks-media-sandbox" \
+      org.opencontainers.image.description="GINASERVICE Layer 4 Sandboxed Media Downloader & MCP Tool (yoinks MIT)" \
+      org.opencontainers.image.vendor="GINASERVICE SARL AU (RC 214563) & ReferPay DAO (CLL#16219882)" \
+      com.ginaservice.security.protocol="GINA-SEC-7L-2026" \
+      com.ginaservice.security.clearance="SEC-L1/TS-L1" \
+      com.ginaservice.security.supervisor="argon.sec-04.arti@security.ginaservice.com" \
+      com.ginaservice.security.s_leak="0.00" \
+      com.ginaservice.security.r_secret="1.0"
+
+# Install minimal runtime dependencies (ffmpeg + python3/yt-dlp + ca-certificates)
+RUN apk add --no-cache ca-certificates ffmpeg yt-dlp && \
+    addgroup -g 10040 -S gina-media-group && \
+    adduser -u 10040 -S gina-media-user -G gina-media-group -h /home/gina-media-user && \
+    mkdir -p /tmp/yoinks-downloads /home/gina-media-user/.yoinks/bin && \
+    ln -sf /usr/bin/yt-dlp /home/gina-media-user/.yoinks/bin/yt-dlp && \
+    sha256sum /usr/bin/yt-dlp > /home/gina-media-user/.yoinks/bin/yt-dlp.sha256 && \
+    chown -R gina-media-user:gina-media-group /tmp/yoinks-downloads /home/gina-media-user
+
+WORKDIR /app
+COPY --from=builder --chown=gina-media-user:gina-media-group /build/package.json /build/LICENSE /build/README.md ./
+COPY --from=builder --chown=gina-media-user:gina-media-group /build/dist ./dist
+COPY --from=builder --chown=gina-media-user:gina-media-group /build/node_modules ./node_modules
+
+ENV NODE_ENV=production \
+    HOME=/home/gina-media-user \
+    YOINKS_SANDBOX_DIR=/tmp/yoinks-downloads \
+    GINA_SECURITY_CLEARANCE="SEC-L1/TS-L1" \
+    GINA_AGENT_ID="GINA-DIR5-MEDIA-001"
+
+VOLUME ["/tmp/yoinks-downloads"]
+
+USER gina-media-user:gina-media-group
+
+ENTRYPOINT ["node", "dist/cli.js"]
+CMD ["--help"]
