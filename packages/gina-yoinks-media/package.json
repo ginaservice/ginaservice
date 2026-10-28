@@ -4,14 +4,23 @@
   "description": "GINASERVICE Sovereign Media Tool (yoinks integration — GINA-SEC-7L-2026 | SEC-L1/TS-L1): yoink any video from YouTube, X, Instagram, Threads & 1800+ sites with SSRF/Injection quarantine and WORM audit logging.",
   "type": "module",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
     "yoinks": "dist/cli.js",
     "gina-yoinks": "dist/cli.js",
     "gina-yoinks-mcp": "dist/mcp_server.js"
   },
   "exports": {
-    ".": "./dist/index.js",
-    "./security": "./dist/security/gina_yoinks_guard.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./security": {
+      "types": "./dist/security/gina_yoinks_guard.d.ts",
+      "import": "./dist/security/gina_yoinks_guard.js",
+      "default": "./dist/security/gina_yoinks_guard.js"
+    },
     "./mcp": "./dist/mcp_server.js"
   },
   "files": [

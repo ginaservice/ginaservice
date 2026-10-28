@@ -12,6 +12,7 @@ export default defineConfig([
     entry: ['src/index.ts', 'src/security/gina_yoinks_guard.ts'],
     format: 'esm',
     target: 'node18',
+    dts: true,
     clean: false,
   },
 ])
